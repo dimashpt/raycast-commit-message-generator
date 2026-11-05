@@ -1,0 +1,10 @@
+---
+description: Git commits without Cursor co-author trailers
+alwaysApply: true
+---
+
+When creating git commits in this project:
+
+- Never pass `git commit --trailer "Co-authored-by: Cursor ..."` or any Co-authored-by / Made-with Cursor trailer.
+- Use plain `git commit -m "..."` (or HEREDOC) with message body only.
+- Do not amend solely to add agent attribution.
