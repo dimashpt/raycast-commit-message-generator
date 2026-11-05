@@ -1,0 +1,67 @@
+{
+  "agents": [
+    {
+      "id": "agy",
+      "title": "Antigravity",
+      "subtitle": "agy CLI",
+      "binaries": ["agy"],
+      "envBin": "GCM_AGY_BIN",
+      "runner": "agy",
+      "parse": "agy"
+    },
+    {
+      "id": "cursor",
+      "title": "Cursor",
+      "subtitle": "cursor-agent or agent --print",
+      "binaries": ["cursor-agent", "agent"],
+      "envBin": "GCM_CURSOR_BIN",
+      "runner": "cursor",
+      "parse": "cursor"
+    },
+    {
+      "id": "claude",
+      "title": "Claude Code",
+      "subtitle": "claude -p",
+      "binaries": ["claude"],
+      "envBin": "GCM_CLAUDE_BIN",
+      "runner": "claude",
+      "parse": "claude"
+    },
+    {
+      "id": "opencode",
+      "title": "OpenCode",
+      "subtitle": "opencode run --format json",
+      "binaries": ["opencode"],
+      "envBin": "GCM_OPENCODE_BIN",
+      "runner": "opencode",
+      "parse": "opencode"
+    },
+    {
+      "id": "codex",
+      "title": "OpenAI Codex",
+      "subtitle": "codex exec",
+      "binaries": ["codex"],
+      "envBin": "GCM_CODEX_BIN",
+      "runner": "codex",
+      "parse": "text"
+    },
+    {
+      "id": "gemini",
+      "title": "Gemini CLI",
+      "subtitle": "gemini --prompt",
+      "binaries": ["gemini"],
+      "envBin": "GCM_GEMINI_BIN",
+      "runner": "gemini",
+      "parse": "gemini"
+    },
+    {
+      "id": "copilot",
+      "title": "GitHub Copilot CLI",
+      "subtitle": "copilot -p",
+      "binaries": ["copilot"],
+      "envBin": "GCM_COPILOT_BIN",
+      "runner": "copilot",
+      "parse": "copilot"
+    }
+  ]
+}

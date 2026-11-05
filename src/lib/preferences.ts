@@ -1,15 +1,15 @@
 import { LocalStorage } from "@raycast/api";
-import type { AgentId } from "./agents";
+import { type AgentId, isAgentId } from "./agents";
 
 const STORAGE_KEY = "commit-message-generator.default-agent";
-const DEFAULT_AGENT: AgentId = "agy";
+export const FALLBACK_DEFAULT_AGENT: AgentId = "agy";
 
-export async function getDefaultAgent(): Promise<AgentId> {
+export async function getSavedDefaultAgent(): Promise<AgentId | undefined> {
   const value = await LocalStorage.getItem<string>(STORAGE_KEY);
-  if (value === "agy" || value === "cursor" || value === "claude") {
+  if (value && isAgentId(value)) {
     return value;
   }
-  return DEFAULT_AGENT;
+  return undefined;
 }
 
 export async function setDefaultAgent(agent: AgentId): Promise<void> {

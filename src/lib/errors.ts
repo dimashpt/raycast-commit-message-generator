@@ -11,15 +11,19 @@ const FRIENDLY_RULES: { test: RegExp; format: (match: RegExpMatchArray | null, l
     format: () => "This folder is not a git repository.",
   },
   {
-    test: /Antigravity CLI not found/,
+    test: /CLI not found \(looked for:/,
+    format: () => "That agent CLI is not installed or not on your PATH.",
+  },
+  {
+    test: /Antigravity CLI not found|agy CLI not found/,
     format: () => "Antigravity (agy) is not installed or not on your PATH.",
   },
   {
-    test: /cursor-agent not found/,
+    test: /cursor-agent not found|Cursor CLI not found/,
     format: () => "Cursor CLI is not installed or not on your PATH.",
   },
   {
-    test: /claude CLI not found/,
+    test: /claude CLI not found|Claude Code CLI not found/,
     format: () => "Claude Code CLI is not installed or not on your PATH.",
   },
   {

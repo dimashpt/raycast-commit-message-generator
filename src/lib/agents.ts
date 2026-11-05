@@ -1,17 +1,28 @@
-export type AgentId = "agy" | "cursor" | "claude";
+import registry from "../../agent-registry.json";
+
+export type AgentId = (typeof registry.agents)[number]["id"];
 
 export type AgentOption = {
   id: AgentId;
   title: string;
   subtitle: string;
+  binary?: string;
 };
 
-export const AGENTS: AgentOption[] = [
-  { id: "agy", title: "Antigravity", subtitle: "agy CLI" },
-  { id: "cursor", title: "Cursor", subtitle: "cursor-agent --mode ask" },
-  { id: "claude", title: "Claude Code", subtitle: "claude -p" },
-];
+export const AGENT_REGISTRY: AgentOption[] = registry.agents.map((a) => ({
+  id: a.id as AgentId,
+  title: a.title,
+  subtitle: a.subtitle,
+}));
+
+export function isAgentId(value: string): value is AgentId {
+  return AGENT_REGISTRY.some((a) => a.id === value);
+}
 
 export function agentLabel(id: AgentId): string {
-  return AGENTS.find((a) => a.id === id)?.title ?? id;
+  return AGENT_REGISTRY.find((a) => a.id === id)?.title ?? id;
+}
+
+export function agentMeta(id: AgentId): AgentOption | undefined {
+  return AGENT_REGISTRY.find((a) => a.id === id);
 }

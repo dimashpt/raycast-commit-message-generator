@@ -16,7 +16,8 @@ import { AddRepositoriesForm } from "./add-repositories";
 import { SelectAgentView } from "./select-agent";
 import { getRepoActivityMap } from "./lib/activity";
 import { agentLabel, type AgentId } from "./lib/agents";
-import { getDefaultAgent } from "./lib/preferences";
+import { listInstalledAgents, pickEffectiveAgent } from "./lib/detect-agents";
+import { getSavedDefaultAgent } from "./lib/preferences";
 import { runGenerate } from "./lib/run-generate";
 import { loadRepos, removeRepo, type RepoEntry } from "./lib/repos";
 import { REPOS_FILE } from "./lib/paths";
@@ -78,13 +79,19 @@ export default function Command() {
   } = usePromise(async () => getRepoActivityMap(), [], { execute: true });
 
   const {
-    data: defaultAgent,
+    data: savedAgent,
     isLoading: agentLoading,
     revalidate: reloadAgent,
-  } = usePromise(async () => getDefaultAgent(), [], { execute: true });
+  } = usePromise(async () => getSavedDefaultAgent(), [], { execute: true });
 
-  const isLoading = reposLoading || agentLoading || activityLoading;
-  const agent: AgentId = defaultAgent ?? "agy";
+  const {
+    data: installedAgents,
+    isLoading: installedLoading,
+    revalidate: reloadInstalled,
+  } = usePromise(async () => listInstalledAgents(), [], { execute: true });
+
+  const isLoading = reposLoading || agentLoading || activityLoading || installedLoading;
+  const agent: AgentId | undefined = pickEffectiveAgent(savedAgent, installedAgents ?? []);
   const activityMap = activity ?? {};
 
   const sortedRepos = useMemo(() => sortRepos(repos ?? [], activityMap, searchText), [repos, activityMap, searchText]);
@@ -95,9 +102,18 @@ export default function Command() {
 
   const onAgentChanged = () => {
     reloadAgent();
+    reloadInstalled();
   };
 
   const onGenerate = async (repo: RepoEntry) => {
+    if (!agent) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "No agent CLI found",
+        message: "Install an agent CLI and add it to PATH (⌃A to pick default)",
+      });
+      return;
+    }
     await runGenerate(repo, agent);
     reloadActivity();
   };
@@ -120,7 +136,7 @@ export default function Command() {
     }
   };
 
-  const generateTitle = `Generate with ${agentLabel(agent)}`;
+  const generateTitle = agent ? `Generate with ${agentLabel(agent)}` : "Generate (no agent installed)";
 
   return (
     <List
@@ -132,8 +148,12 @@ export default function Command() {
       actions={<ActionPanel>{settingsActions(push, onReposChanged, onAgentChanged)}</ActionPanel>}
     >
       <List.Section
-        title={`Default agent · ${agentLabel(agent)}`}
-        subtitle="Enter on a repo to generate · sorted by recent activity"
+        title={agent ? `Default agent · ${agentLabel(agent)}` : "No agent CLI on PATH"}
+        subtitle={
+          agent
+            ? "Enter on a repo to generate · sorted by recent activity"
+            : "Install agy, cursor-agent, claude, opencode, codex, or gemini"
+        }
       >
         {(repos ?? []).length === 0 && !isLoading ? (
           <List.EmptyView

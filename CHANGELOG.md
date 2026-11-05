@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-11-05
+
+- Auto-detect installed agent CLIs on PATH (`--list-agents` / `--verbose`)
+- Agents: Antigravity, Cursor, Claude Code, OpenCode, Codex, Gemini CLI, GitHub Copilot CLI
+- Raycast UI lists only installed agents; default falls back if saved agent is missing
+- Shared `agent-registry.json` for CLI and extension metadata
+
 ## 1.0.0 — 2026-11-05
 
 First stable release.

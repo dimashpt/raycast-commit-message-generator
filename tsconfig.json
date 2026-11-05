@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "agent-registry.json"],
   "compilerOptions": {
     "lib": ["ES2023"],
     "module": "commonjs",

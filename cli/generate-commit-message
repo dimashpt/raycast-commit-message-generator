@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Generate a Conventional Commit message from staged changes via a coding-agent CLI.
+set -euo pipefail
+
+GCM_SHARE="${GCM_SHARE:-$HOME/.local/share/generate-commit-message}"
+# shellcheck source=/dev/null
+source "$GCM_SHARE/common.sh"
+
+AGENT="agy"
+REPO=""
+LIST_AGENTS=0
+LIST_VERBOSE=0
+
+usage() {
+  local ids
+  ids="$(gcm_registry_ids | tr '\n' '|' | sed 's/|$//')"
+  cat <<EOF >&2
+Usage: generate-commit-message [--agent ID] [--repo PATH] [--list-agents] [--verbose]
+
+Agents (when installed on PATH): ${ids}
+Defaults: agent=agy, repo=current directory (must be inside a git repo).
+
+--list-agents   Print installed agent ids (one per line)
+--verbose       With --list-agents, print id|title|binary
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --agent)
+      AGENT="${2:?}"
+      shift 2
+      ;;
+    --repo)
+      REPO="${2:?}"
+      shift 2
+      ;;
+    --list-agents)
+      LIST_AGENTS=1
+      shift
+      ;;
+    --verbose)
+      LIST_VERBOSE=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "$LIST_AGENTS" -eq 1 ]]; then
+  if [[ "$LIST_VERBOSE" -eq 1 ]]; then
+    gcm_list_installed_agents verbose
+  else
+    gcm_list_installed_agents
+  fi
+  exit 0
+fi
+
+if [[ -z "$REPO" ]]; then
+  REPO="$(pwd)"
+fi
+
+REPO="${REPO/#\~/$HOME}"
+
+if ! gcm_is_known_agent "$AGENT"; then
+  echo "Unknown agent: $AGENT (use --list-agents to see installed agents)." >&2
+  exit 1
+fi
+
+if ! gcm_resolve_agent_bin "$AGENT" >/dev/null; then
+  gcm_agent_not_found "$AGENT" >&2
+  exit 1
+fi
+
+gcm_generate_in_repo "$AGENT" "$REPO"

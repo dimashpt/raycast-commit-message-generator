@@ -2,7 +2,7 @@
 
 Raycast extension for generating Conventional Commit messages from staged git diffs.
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **CLI:** `~/.local/bin/generate-commit-message`  
 **Repos:** `~/.config/generate-commit-message/repos.conf`
 
@@ -36,6 +36,26 @@ npm run dev
 1. Open **Commit Message Generator**
 2. **Enter** on a repo → generate with default agent → clipboard
 3. **⌘K** → Add Repositories / Select Default Agent (**⌃A**), Copy path (**⌘C**), Remove repo
+
+Only agent CLIs found on your PATH appear in **Select Default Agent**. Supported agents (when installed):
+
+| Agent | Binary (first match) |
+|--------|----------------------|
+| Antigravity | `agy` |
+| Cursor | `cursor-agent`, `agent` |
+| Claude Code | `claude` |
+| OpenCode | `opencode` |
+| OpenAI Codex | `codex` |
+| Gemini CLI | `gemini` |
+| GitHub Copilot CLI | `copilot` |
+
+List installed agents from the terminal:
+
+```bash
+generate-commit-message --list-agents --verbose
+```
+
+Registry: `~/.local/share/generate-commit-message/agent-registry.json` (also in this repo as `agent-registry.json`).
 
 ## Publish to Raycast Store (optional)
 

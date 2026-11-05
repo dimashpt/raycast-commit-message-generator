@@ -1,7 +1,8 @@
 import { Action, ActionPanel, Icon, List, Toast, showToast, useNavigation } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
-import { AGENTS, agentLabel, type AgentId } from "./lib/agents";
-import { getDefaultAgent, setDefaultAgent } from "./lib/preferences";
+import { type AgentId, agentLabel } from "./lib/agents";
+import { listInstalledAgents } from "./lib/detect-agents";
+import { getSavedDefaultAgent, setDefaultAgent } from "./lib/preferences";
 
 type SelectAgentViewProps = {
   onChanged: () => void;
@@ -9,12 +10,20 @@ type SelectAgentViewProps = {
 
 export function SelectAgentView({ onChanged }: SelectAgentViewProps) {
   const { pop } = useNavigation();
-  const { data: current, revalidate } = usePromise(async () => getDefaultAgent(), [], { execute: true });
+  const {
+    data: installed,
+    isLoading,
+    revalidate: reload,
+  } = usePromise(async () => listInstalledAgents(), [], { execute: true });
+  const { data: current, revalidate: reloadDefault } = usePromise(async () => getSavedDefaultAgent(), [], {
+    execute: true,
+  });
 
   async function choose(agent: AgentId) {
     await setDefaultAgent(agent);
     onChanged();
-    revalidate();
+    reloadDefault();
+    reload();
     await showToast({
       style: Toast.Style.Success,
       title: "Default agent updated",
@@ -23,22 +32,32 @@ export function SelectAgentView({ onChanged }: SelectAgentViewProps) {
     pop();
   }
 
+  const agents = installed ?? [];
+
   return (
-    <List isLoading={current === undefined} searchBarPlaceholder="Select default agent">
-      {AGENTS.map((agent) => (
-        <List.Item
-          key={agent.id}
-          title={agent.title}
-          subtitle={agent.subtitle}
-          icon={current === agent.id ? Icon.CheckCircle : Icon.Circle}
-          accessories={current === agent.id ? [{ text: "Default", icon: Icon.Stars }] : undefined}
-          actions={
-            <ActionPanel>
-              <Action title="Set as Default" icon={Icon.Stars} onAction={() => choose(agent.id)} />
-            </ActionPanel>
-          }
+    <List isLoading={isLoading || current === undefined} searchBarPlaceholder="Select default agent">
+      {agents.length === 0 && !isLoading ? (
+        <List.EmptyView
+          icon={Icon.Terminal}
+          title="No agent CLIs found"
+          description="Install agy, cursor-agent, claude, opencode, codex, or gemini and ensure they are on PATH"
         />
-      ))}
+      ) : (
+        agents.map((agent) => (
+          <List.Item
+            key={agent.id}
+            title={agent.title}
+            subtitle={agent.binary ?? agent.subtitle}
+            icon={current === agent.id ? Icon.CheckCircle : Icon.Circle}
+            accessories={current === agent.id ? [{ text: "Default", icon: Icon.Stars }] : undefined}
+            actions={
+              <ActionPanel>
+                <Action title="Set as Default" icon={Icon.Stars} onAction={() => choose(agent.id)} />
+              </ActionPanel>
+            }
+          />
+        ))
+      )}
     </List>
   );
 }
