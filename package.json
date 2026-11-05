@@ -1,0 +1,38 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "commit-message-generator",
+  "title": "Commit Message Generator",
+  "description": "Generate Conventional Commit messages from staged git diff",
+  "icon": "icon.png",
+  "author": "dimashpt",
+  "version": "1.0.0",
+  "categories": ["Developer Tools"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "index",
+      "title": "Commit Message Generator",
+      "description": "Pick a repo to generate a commit message (default agent)",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.103.6",
+    "@raycast/utils": "^1.19.1"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.0.4",
+    "@types/node": "^22.13.10",
+    "eslint": "^8.57.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "build": "ray build -e dist -o dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "release": "npm run lint && npm run build",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
