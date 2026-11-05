@@ -2,7 +2,7 @@
 # Install Commit Message Generator as an imported Raycast extension (production build).
 set -euo pipefail
 
-EXT_ROOT="${EXT_ROOT:-$HOME/.local/share/generate-commit-message/raycast-extension}"
+EXT_ROOT="${EXT_ROOT:-$HOME/Developer/personal/raycast-commit-message-generator}"
 DIST="$EXT_ROOT/dist"
 
 cd "$EXT_ROOT"
