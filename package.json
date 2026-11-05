@@ -2,17 +2,19 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "commit-message-generator",
   "title": "Commit Message Generator",
-  "description": "Generate Conventional Commit messages from staged git diff",
+  "description": "Generate Conventional Commit messages from staged git changes using a coding-agent CLI on your PATH.",
   "icon": "icon.png",
   "author": "dimashpt",
-  "version": "1.1.0",
+  "version": "1.2.1",
+  "platforms": ["macOS"],
   "categories": ["Developer Tools"],
   "license": "MIT",
   "commands": [
     {
       "name": "index",
       "title": "Commit Message Generator",
-      "description": "Pick a repo to generate a commit message (default agent)",
+      "subtitle": "Git · Agent CLI",
+      "description": "Pick a repo and generate a commit message from staged changes",
       "mode": "view"
     }
   ],

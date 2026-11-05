@@ -2,6 +2,7 @@ import { Clipboard, Toast, closeMainWindow, showToast } from "@raycast/api";
 import { recordRepoGenerate } from "./activity";
 import type { AgentId } from "./agents";
 import { agentLabel } from "./agents";
+import { friendlyGenerateError } from "./errors";
 import { generateCommitMessage } from "./generate";
 import type { RepoEntry } from "./repos";
 
@@ -26,6 +27,6 @@ export async function runGenerate(repo: RepoEntry, agent: AgentId): Promise<void
   } catch (error) {
     toast.style = Toast.Style.Failure;
     toast.title = "Could not generate commit message";
-    toast.message = error instanceof Error ? error.message : String(error);
+    toast.message = friendlyGenerateError(error);
   }
 }

@@ -1,7 +1,11 @@
+import { LocalStorage } from "@raycast/api";
 import { execFileSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { REPOS_FILE } from "./paths";
+
+const STORAGE_KEY = "commit-message-generator.repos";
+const LEGACY_REPOS_FILE = path.join(os.homedir(), ".config/generate-commit-message/repos.conf");
 
 export type RepoEntry = {
   label: string;
@@ -19,34 +23,8 @@ function expandHome(p: string): string {
   return p;
 }
 
-export function ensureReposFile(): void {
-  const dir = path.dirname(REPOS_FILE);
-  fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(REPOS_FILE)) {
-    fs.writeFileSync(REPOS_FILE, "# label|/absolute/path\n", "utf8");
-  }
-}
-
-export function gitRepoRoot(folderPath: string): string {
-  const resolved = path.resolve(expandHome(folderPath));
-  if (!fs.existsSync(resolved)) {
-    throw new Error(`Path does not exist: ${resolved}`);
-  }
-  try {
-    return execFileSync("git", ["rev-parse", "--show-toplevel"], {
-      cwd: resolved,
-      encoding: "utf8",
-    }).trim();
-  } catch {
-    throw new Error(`Not a git repository: ${resolved}`);
-  }
-}
-
-export function loadRepos(): RepoEntry[] {
-  ensureReposFile();
-
+function parseLegacyReposFile(raw: string): RepoEntry[] {
   const entries: RepoEntry[] = [];
-  const raw = fs.readFileSync(REPOS_FILE, "utf8");
 
   for (const line of raw.split("\n")) {
     const stripped = trimLine(line.split("#")[0] ?? "");
@@ -66,19 +44,74 @@ export function loadRepos(): RepoEntry[] {
   return entries;
 }
 
-export function appendRepo(label: string, repoPath: string): void {
-  ensureReposFile();
+function readLegacyReposFile(): RepoEntry[] {
+  if (!fs.existsSync(LEGACY_REPOS_FILE)) {
+    return [];
+  }
+  try {
+    return parseLegacyReposFile(fs.readFileSync(LEGACY_REPOS_FILE, "utf8"));
+  } catch {
+    return [];
+  }
+}
+
+async function saveRepos(entries: RepoEntry[]): Promise<void> {
+  await LocalStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+async function migrateLegacyIfNeeded(): Promise<RepoEntry[] | null> {
+  const legacy = readLegacyReposFile();
+  if (legacy.length === 0) {
+    return null;
+  }
+  await saveRepos(legacy);
+  return legacy;
+}
+
+export function gitRepoRoot(folderPath: string): string {
+  const resolved = path.resolve(expandHome(folderPath));
+  if (!fs.existsSync(resolved)) {
+    throw new Error(`Path does not exist: ${resolved}`);
+  }
+  try {
+    return execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      cwd: resolved,
+      encoding: "utf8",
+    }).trim();
+  } catch {
+    throw new Error(`Not a git repository: ${resolved}`);
+  }
+}
+
+export async function loadRepos(): Promise<RepoEntry[]> {
+  const raw = await LocalStorage.getItem<string>(STORAGE_KEY);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as RepoEntry[];
+      if (Array.isArray(parsed)) {
+        return parsed.filter((e) => e && typeof e.label === "string" && typeof e.path === "string");
+      }
+    } catch {
+      // fall through to migration
+    }
+  }
+
+  const migrated = await migrateLegacyIfNeeded();
+  return migrated ?? [];
+}
+
+export async function appendRepo(label: string, repoPath: string): Promise<void> {
   const root = gitRepoRoot(repoPath);
   const normalized = root.replace(/\/$/, "");
-  const existing = loadRepos();
+  const existing = await loadRepos();
   if (existing.some((r) => r.path === normalized)) {
     throw new Error(`Already listed: ${normalized}`);
   }
   const display = label.trim() || path.basename(normalized);
-  fs.appendFileSync(REPOS_FILE, `${display}|${normalized}\n`, "utf8");
+  await saveRepos([...existing, { label: display, path: normalized }]);
 }
 
-export function appendReposFromFolders(folderPaths: string[]): { added: string[]; errors: string[] } {
+export async function appendReposFromFolders(folderPaths: string[]): Promise<{ added: string[]; errors: string[] }> {
   const added: string[] = [];
   const errors: string[] = [];
 
@@ -86,7 +119,7 @@ export function appendReposFromFolders(folderPaths: string[]): { added: string[]
     try {
       const root = gitRepoRoot(folder);
       const label = path.basename(root);
-      appendRepo(label, root);
+      await appendRepo(label, root);
       added.push(label);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -97,33 +130,11 @@ export function appendReposFromFolders(folderPaths: string[]): { added: string[]
   return { added, errors };
 }
 
-export function removeRepo(label: string): void {
-  ensureReposFile();
-
-  const lines = fs.readFileSync(REPOS_FILE, "utf8").split("\n");
-  let removed = false;
-  const out: string[] = [];
-
-  for (const line of lines) {
-    const commentIdx = line.indexOf("#");
-    const content = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
-    const stripped = trimLine(content);
-    if (!stripped) {
-      out.push(line);
-      continue;
-    }
-
-    const entryLabel = stripped.includes("|") ? trimLine(stripped.split("|")[0] ?? "") : trimLine(stripped);
-    if (entryLabel === label) {
-      removed = true;
-      continue;
-    }
-    out.push(line);
-  }
-
-  if (!removed) {
+export async function removeRepo(label: string): Promise<void> {
+  const existing = await loadRepos();
+  const next = existing.filter((r) => r.label !== label);
+  if (next.length === existing.length) {
     throw new Error(`Repository not found: ${label}`);
   }
-
-  fs.writeFileSync(REPOS_FILE, out.join("\n").replace(/\n?$/, "\n"), "utf8");
+  await saveRepos(next);
 }

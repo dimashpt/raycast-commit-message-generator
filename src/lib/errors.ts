@@ -27,26 +27,17 @@ const FRIENDLY_RULES: { test: RegExp; format: (match: RegExpMatchArray | null, l
     format: () => "Claude Code CLI is not installed or not on your PATH.",
   },
   {
-    test: /jq is required/,
-    format: () => "The generate-commit-message script needs jq (brew install jq).",
+    test: /Agent returned invalid JSON|Agent returned an empty response/,
+    format: () => "The agent CLI returned an unexpected response. Try again or pick another agent.",
   },
   {
     test: /Model returned an empty commit message/,
     format: () => "The AI returned an empty message. Try again or change agent.",
   },
-  {
-    test: /CLI not found/,
-    format: () => "generate-commit-message script is missing from ~/.local/bin.",
-  },
 ];
 
 function isNoiseLine(line: string): boolean {
-  return (
-    line.startsWith("Command failed:") ||
-    line.includes("generate-commit-message") ||
-    line.includes("--agent") ||
-    line.includes("--repo")
-  );
+  return line.startsWith("Command failed:");
 }
 
 export function friendlyGenerateError(error: unknown, stderr?: string): string {

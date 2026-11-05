@@ -1,20 +1,14 @@
-# Changelog
+# Commit Message Generator Changelog
 
-## 1.1.0 — 2026-11-05
+## [Standalone extension with agent auto-detect] - {PR_MERGE_DATE}
 
-- Auto-detect installed agent CLIs on PATH (`--list-agents` / `--verbose`)
-- Agents: Antigravity, Cursor, Claude Code, OpenCode, Codex, Gemini CLI, GitHub Copilot CLI
-- Raycast UI lists only installed agents; default falls back if saved agent is missing
-- Shared `agent-registry.json` for CLI and extension metadata
+- Generate commit messages by calling agent CLIs directly (no external shell script or skill file)
+- Detect installed agents from PATH; support Antigravity, Cursor, Claude Code, OpenCode, Codex, Gemini CLI, and GitHub Copilot CLI
+- Store repositories and default agent in Raycast Local Storage (one-time migration from legacy `repos.conf` if present)
+- Conventional Commit rules embedded in the extension prompt
 
-## 1.0.0 — 2026-11-05
+## [Initial release] - {PR_MERGE_DATE}
 
-First stable release.
-
-- Single command **Commit Message Generator** with native Raycast UI
-- Repo list sorted by recent activity with relative time accessories
-- Generate with default agent (Antigravity / Cursor / Claude) via `~/.local/bin/generate-commit-message`
-- Add repositories (folder picker, Finder selection) → `~/.config/generate-commit-message/repos.conf`
-- Persist default agent in Raycast Local Storage
-- Shortcuts: Enter generate, ⌃A agent, ⌘C copy path, Raycast Remove shortcut for delete repo
-- Close Raycast + toast progress on generate; friendly error messages
+- Pick a git repository, generate from staged changes, copy message to clipboard
+- Add repositories via folder picker or Finder selection
+- Sort repositories by recent activity; shortcuts for generate, agent, copy path, and remove

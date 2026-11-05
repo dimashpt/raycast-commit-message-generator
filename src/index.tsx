@@ -20,12 +20,57 @@ import { listInstalledAgents, pickEffectiveAgent } from "./lib/detect-agents";
 import { getSavedDefaultAgent } from "./lib/preferences";
 import { runGenerate } from "./lib/run-generate";
 import { loadRepos, removeRepo, type RepoEntry } from "./lib/repos";
-import { REPOS_FILE } from "./lib/paths";
 import { formatAbsoluteTime, formatRelativeTime } from "./lib/time";
 
-/** Raycast does not show shortcut badges on actions inside ActionPanel.Section. */
+/** Shortcut badges may not show on actions inside ActionPanel.Section (Raycast quirk). */
 const SHORTCUT_SELECT_AGENT: Keyboard.Shortcut = { modifiers: ["ctrl"], key: "a" };
 const SHORTCUT_COPY_PATH: Keyboard.Shortcut = { modifiers: ["cmd"], key: "c" };
+
+function repoItemActions(
+  generateTitle: string,
+  onGenerate: () => void,
+  push: ReturnType<typeof useNavigation>["push"],
+  onReposChanged: () => void,
+  onAgentChanged: () => void,
+  repo: RepoEntry,
+  onRemove: () => void,
+) {
+  return (
+    <ActionPanel>
+      <ActionPanel.Section>
+        <Action title={generateTitle} icon={Icon.Wand} onAction={onGenerate} />
+      </ActionPanel.Section>
+      <ActionPanel.Section>
+        <Action
+          title="Add Repositories…"
+          icon={Icon.Plus}
+          onAction={() => push(<AddRepositoriesForm onAdded={onReposChanged} />)}
+        />
+        <Action
+          title="Select Default Agent…"
+          icon={Icon.Stars}
+          shortcut={SHORTCUT_SELECT_AGENT}
+          onAction={() => push(<SelectAgentView onChanged={onAgentChanged} />)}
+        />
+        <Action.CopyToClipboard
+          title="Copy Repository Path"
+          content={repo.path}
+          icon={Icon.Folder}
+          shortcut={SHORTCUT_COPY_PATH}
+        />
+      </ActionPanel.Section>
+      <ActionPanel.Section>
+        <Action
+          title="Remove Repository"
+          icon={Icon.Trash}
+          style={Action.Style.Destructive}
+          shortcut={Keyboard.Shortcut.Common.Remove}
+          onAction={onRemove}
+        />
+      </ActionPanel.Section>
+    </ActionPanel>
+  );
+}
 
 function settingsActions(
   push: ReturnType<typeof useNavigation>["push"],
@@ -45,7 +90,6 @@ function settingsActions(
         shortcut={SHORTCUT_SELECT_AGENT}
         onAction={() => push(<SelectAgentView onChanged={onAgentChanged} />)}
       />
-      <Action.Open title="Open Repos Config" target={REPOS_FILE} icon={Icon.Document} />
     </>
   );
 }
@@ -127,7 +171,7 @@ export default function Command() {
     if (!confirmed) return;
 
     try {
-      removeRepo(repo.label);
+      await removeRepo(repo.label);
       await showToast({ style: Toast.Style.Success, title: "Repository removed", message: repo.label });
       onReposChanged();
     } catch (error) {
@@ -191,25 +235,15 @@ export default function Command() {
                       ]
                     : [{ text: "Never", tooltip: "No commit message generated yet" }]
                 }
-                actions={
-                  <ActionPanel>
-                    <Action title={generateTitle} icon={Icon.Wand} onAction={() => onGenerate(repo)} />
-                    {settingsActions(push, onReposChanged, onAgentChanged)}
-                    <Action.CopyToClipboard
-                      title="Copy Repository Path"
-                      content={repo.path}
-                      icon={Icon.Folder}
-                      shortcut={SHORTCUT_COPY_PATH}
-                    />
-                    <Action
-                      title="Remove Repository"
-                      icon={Icon.Trash}
-                      style={Action.Style.Destructive}
-                      shortcut={Keyboard.Shortcut.Common.Remove}
-                      onAction={() => removeRepository(repo)}
-                    />
-                  </ActionPanel>
-                }
+                actions={repoItemActions(
+                  generateTitle,
+                  () => onGenerate(repo),
+                  push,
+                  onReposChanged,
+                  onAgentChanged,
+                  repo,
+                  () => removeRepository(repo),
+                )}
               />
             );
           })

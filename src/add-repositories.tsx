@@ -14,7 +14,7 @@ export function AddRepositoriesForm({ onAdded }: AddRepositoriesFormProps) {
       return;
     }
 
-    const { added, errors } = appendReposFromFolders(folderPaths);
+    const { added, errors } = await appendReposFromFolders(folderPaths);
 
     if (added.length > 0) {
       onAdded();
